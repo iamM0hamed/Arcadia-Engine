@@ -15,7 +15,6 @@
 
 #include "ArcadiaEngine.h"
 
-
 using namespace std;
 
 // =========================================================
@@ -126,17 +125,65 @@ long long InventorySystem::countStringPossibilities(string s) {
 // PART C: WORLD NAVIGATOR (Graphs)
 // =========================================================
 
+// Some Stuff for Kruskal's Algortihm
+
+class DisjointSet {
+   public:
+	vector<int> parent, rank;
+	DisjointSet(int n) {
+		parent.resize(n);
+		rank.resize(n, 0);
+		iota(parent.begin(), parent.end(), 0);	// parent[i] = i
+	}
+
+	int find(int u) {
+		if (parent[u] != u) parent[u] = find(parent[u]);
+		return parent[u];
+	}
+
+	void unite(int u, int v) {
+		int RootU = find(u);
+		int RootV = find(v);
+
+		if (RootU == RootV) return;	 // in the same set
+
+		if (rank[RootU] < rank[RootV]) {
+			parent[RootU] = RootV;
+		} else if (rank[RootU] > rank[RootV]) {
+			parent[RootV] = RootU;
+		} else {
+			parent[RootV] = RootU;
+			rank[RootU]++;
+		}
+	}
+};
+
+struct Edge {
+	int u, v, weight;
+	bool operator<(const Edge& other) const { return weight < other.weight; }
+};
+
+//=================================================================================================
+
 bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, int dest) {
 	// TODO: Implement path existence check using BFS or DFS
 	// edges are bidirectional
 	return false;
 }
 
+/// @brief Implemented using Kruskal's Algorithm
+/// @param n Number of cities
+/// @param m Number of roads
+/// @param goldRate Gold ratio for entier roads
+/// @param silverRate Silver ratio for entier roads
+/// @param roadData Conatains Roads info as following { Start , End , GoldCostPerRoad , SilverCostPerRoad }
+/// @return
 long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate, vector<vector<int>>& roadData) {
 	// TODO: Implement Minimum Spanning Tree (Kruskal's or Prim's)
 	// roadData[i] = {u, v, goldCost, silverCost}
 	// Total cost = goldCost * goldRate + silverCost * silverRate
 	// Return -1 if graph cannot be fully connected
+
 	return -1;
 }
 
