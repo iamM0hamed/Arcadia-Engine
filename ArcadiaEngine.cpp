@@ -23,22 +23,26 @@ using namespace std;
 
 // --- 1. PlayerTable (Double Hashing) ---
 
-class ConcretePlayerTable : public PlayerTable {
-   private:
+class ConcretePlayerTable : public PlayerTable
+{
+private:
 	// TODO: Define your data structures here
 	// Hint: You'll need a hash table with double hashing collision resolution
 
-   public:
-	ConcretePlayerTable() {
+public:
+	ConcretePlayerTable()
+	{
 		// TODO: Initialize your hash table
 	}
 
-	void insert(int playerID, string name) override {
+	void insert(int playerID, string name) override
+	{
 		// TODO: Implement double hashing insert
 		// Remember to handle collisions using h1(key) + i * h2(key)
 	}
 
-	string search(int playerID) override {
+	string search(int playerID) override
+	{
 		// TODO: Implement double hashing search
 		// Return "" if player not found
 		return "";
@@ -47,26 +51,31 @@ class ConcretePlayerTable : public PlayerTable {
 
 // --- 2. Leaderboard (Skip List) ---
 
-class ConcreteLeaderboard : public Leaderboard {
-   private:
+class ConcreteLeaderboard : public Leaderboard
+{
+private:
 	// TODO: Define your skip list node structure and necessary variables
 	// Hint: You'll need nodes with multiple forward pointers
 
-   public:
-	ConcreteLeaderboard() {
+public:
+	ConcreteLeaderboard()
+	{
 		// TODO: Initialize your skip list
 	}
 
-	void addScore(int playerID, int score) override {
+	void addScore(int playerID, int score) override
+	{
 		// TODO: Implement skip list insertion
 		// Remember to maintain descending order by score
 	}
 
-	void removePlayer(int playerID) override {
+	void removePlayer(int playerID) override
+	{
 		// TODO: Implement skip list deletion
 	}
 
-	vector<int> getTopN(int n) override {
+	vector<int> getTopN(int n) override
+	{
 		// TODO: Return top N player IDs in descending score order
 		return {};
 	}
@@ -74,22 +83,26 @@ class ConcreteLeaderboard : public Leaderboard {
 
 // --- 3. AuctionTree (Red-Black Tree) ---
 
-class ConcreteAuctionTree : public AuctionTree {
-   private:
+class ConcreteAuctionTree : public AuctionTree
+{
+private:
 	// TODO: Define your Red-Black Tree node structure
 	// Hint: Each node needs: id, price, color, left, right, parent pointers
 
-   public:
-	ConcreteAuctionTree() {
+public:
+	ConcreteAuctionTree()
+	{
 		// TODO: Initialize your Red-Black Tree
 	}
 
-	void insertItem(int itemID, int price) override {
+	void insertItem(int itemID, int price) override
+	{
 		// TODO: Implement Red-Black Tree insertion
 		// Remember to maintain RB-Tree properties with rotations and recoloring
 	}
 
-	void deleteItem(int itemID) override {
+	void deleteItem(int itemID) override
+	{
 		// TODO: Implement Red-Black Tree deletion
 		// This is complex - handle all cases carefully
 	}
@@ -99,21 +112,24 @@ class ConcreteAuctionTree : public AuctionTree {
 // PART B: INVENTORY SYSTEM (Dynamic Programming)
 // =========================================================
 
-int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
+int InventorySystem::optimizeLootSplit(int n, vector<int> &coins)
+{
 	// TODO: Implement partition problem using DP
 	// Goal: Minimize |sum(subset1) - sum(subset2)|
 	// Hint: Use subset sum DP to find closest sum to total/2
 	return 0;
 }
 
-int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& items) {
+int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>> &items)
+{
 	// TODO: Implement 0/1 Knapsack using DP
 	// items = {weight, value} pairs
 	// Return maximum value achievable within capacity
 	return 0;
 }
 
-long long InventorySystem::countStringPossibilities(string s) {
+long long InventorySystem::countStringPossibilities(string s)
+{
 	// TODO: Implement string decoding DP
 	// Rules: "uu" can be decoded as "w" or "uu"
 	//        "nn" can be decoded as "m" or "nn"
@@ -127,45 +143,70 @@ long long InventorySystem::countStringPossibilities(string s) {
 
 // Some Stuff for Kruskal's Algortihm
 
-class DisjointSet {
-   public:
+class DisjointSet
+{
+private:
 	vector<int> parent, rank;
-	DisjointSet(int n) {
-		parent.resize(n);
-		rank.resize(n, 0);
-		iota(parent.begin(), parent.end(), 0);	// parent[i] = i
-	}
 
-	int find(int u) {
-		if (parent[u] != u) parent[u] = find(parent[u]);
+	int find(int u)
+	{
+		if (parent[u] != u)
+			parent[u] = find(parent[u]);
 		return parent[u];
 	}
 
-	void unite(int u, int v) {
+	void unite(int u, int v)
+	{
 		int RootU = find(u);
 		int RootV = find(v);
 
-		if (RootU == RootV) return;	 // in the same set
+		if (RootU == RootV)
+			return; // in the same set
 
-		if (rank[RootU] < rank[RootV]) {
+		if (rank[RootU] < rank[RootV])
+		{
 			parent[RootU] = RootV;
-		} else if (rank[RootU] > rank[RootV]) {
+		}
+		else if (rank[RootU] > rank[RootV])
+		{
 			parent[RootV] = RootU;
-		} else {
+		}
+		else
+		{
 			parent[RootV] = RootU;
 			rank[RootU]++;
 		}
 	}
+
+public:
+	DisjointSet(int n)
+	{
+		parent.resize(n);
+		rank.resize(n, 0);
+		iota(parent.begin(), parent.end(), 0); // parent[i] = i
+	}
+
+	bool connected(int u, int v)
+	{
+		return find(u) == find(v);
+	}
+
+	void doUnite(int u, int v)
+	{
+		unite(u, v);
+	}
 };
 
-struct Edge {
+struct Edge
+{
 	int u, v, weight;
-	bool operator<(const Edge& other) const { return weight < other.weight; }
+	bool operator<(const Edge &other) const { return weight < other.weight; }
 };
 
 //=================================================================================================
 
-bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, int dest) {
+bool WorldNavigator::pathExists(int n, vector<vector<int>> &edges, int source, int dest)
+{
 	// TODO: Implement path existence check using BFS or DFS
 	// edges are bidirectional
 	return false;
@@ -178,20 +219,48 @@ bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, i
 /// @param silverRate Silver ratio for entier roads
 /// @param roadData Conatains Roads info as following { Start , End , GoldCostPerRoad , SilverCostPerRoad }
 /// @return
-long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate, vector<vector<int>>& roadData) {
+long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate, vector<vector<int>> &roadData)
+{
 	// TODO: Implement Minimum Spanning Tree (Kruskal's or Prim's)
 	// roadData[i] = {u, v, goldCost, silverCost}
 	// Total cost = goldCost * goldRate + silverCost * silverRate
 	// Return -1 if graph cannot be fully connected
 
+	vector<Edge> edges(roadData.size());
+
+	for (const auto &row : roadData)
+	{
+		int currentCost = goldRate * row[2] + silverRate * row[3];
+		edges.push_back({row[0], row[1], currentCost});
+	}
+	sort(edges.begin(), edges.end());
+
+	DisjointSet ds = DisjointSet(n);
+	vector<Edge> MST;
+	int totalCost = 0;
+
+	for (Edge e : edges)
+	{
+		if (ds.connected(e.u, e.v)) // to not form a cycle
+		{
+			totalCost += e.weight;
+			ds.doUnite(e.u, e.v);
+			MST.push_back(e);
+		}
+	}
+	if (totalCost)
+		return totalCost;
+
 	return -1;
 }
 
-string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
+string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>> &roads)
+{
 	// TODO: Implement All-Pairs Shortest Path (Floyd-Warshall)
 	// Sum all shortest distances between unique pairs (i < j)
 	// Return the sum as a binary string
 	// Hint: Handle large numbers carefully
+
 	return "0";
 }
 
@@ -199,7 +268,8 @@ string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) 
 // PART D: SERVER KERNEL (Greedy)
 // =========================================================
 
-int ServerKernel::minIntervals(vector<char>& tasks, int n) {
+int ServerKernel::minIntervals(vector<char> &tasks, int n)
+{
 	// TODO: Implement task scheduler with cooling time
 	// Same task must wait 'n' intervals before running again
 	// Return minimum total intervals needed (including idle time)
@@ -211,10 +281,11 @@ int ServerKernel::minIntervals(vector<char>& tasks, int n) {
 // FACTORY FUNCTIONS (Required for Testing)
 // =========================================================
 
-extern "C" {
-PlayerTable* createPlayerTable() { return new ConcretePlayerTable(); }
+extern "C"
+{
+	PlayerTable *createPlayerTable() { return new ConcretePlayerTable(); }
 
-Leaderboard* createLeaderboard() { return new ConcreteLeaderboard(); }
+	Leaderboard *createLeaderboard() { return new ConcreteLeaderboard(); }
 
-AuctionTree* createAuctionTree() { return new ConcreteAuctionTree(); }
+	AuctionTree *createAuctionTree() { return new ConcreteAuctionTree(); }
 }
