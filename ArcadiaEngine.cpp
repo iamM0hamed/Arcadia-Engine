@@ -1,6 +1,8 @@
 // ArcadiaEngine.cpp - STUDENT TEMPLATE
 // TODO: Implement all the functions below according to the assignment requirements
 
+#define INF INT_MAX
+
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -226,13 +228,14 @@ long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long lo
 	// Total cost = goldCost * goldRate + silverCost * silverRate
 	// Return -1 if graph cannot be fully connected
 
-	vector<Edge> edges(roadData.size());
-
+	vector<Edge> edges;
+	edges.reserve(roadData.size());
 	for (const auto &row : roadData)
 	{
 		int currentCost = goldRate * row[2] + silverRate * row[3];
-		edges.push_back({row[0], row[1], currentCost});
+		edges.emplace_back(row[0], row[1], currentCost);
 	}
+
 	sort(edges.begin(), edges.end());
 
 	DisjointSet ds = DisjointSet(n);
@@ -261,7 +264,66 @@ string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>> &roads)
 	// Return the sum as a binary string
 	// Hint: Handle large numbers carefully
 
-	return "0";
+	int v = roads.size();
+	vector<vector<int>> dist(v, vector<int>(v, INF));
+
+	// init Dist Matrix
+	for (int i = 0; i < v; i++)
+	{
+		for (int j = 0; j < v; j++)
+		{
+			if (i == j)
+			{
+				dist[i][i] = 0;
+			}
+			else if (roads[i][j] != -1) // if it exists
+			{
+				dist[i][j] = roads[i][j];
+			}
+		}
+	}
+
+	for (int k = 0; k < v; k++)
+	{
+		for (int i = 0; i < v; i++)
+		{
+			if (dist[i][k] == INF)
+				continue;
+			for (int j = 0; j < v; j++)
+			{
+				if (dist[k][j] == INF)
+					continue;
+
+				int throughK = dist[i][k] + dist[k][j];
+
+				if (throughK < dist[i][j])
+					dist[i][j] = throughK;
+			}
+		}
+	}
+
+	int sum = 0;
+	for (int i = 0; i < v; i++)
+	{
+		for (int j = 0; j < v; j++)
+		{
+			if (dist[i][j] != INF)
+			{
+				sum += dist[i][j];
+			}
+		}
+	}
+
+	if (sum == 0)
+		return "0";
+
+	string binary;
+	while (sum > 0)
+	{
+		binary = char('0' + (sum & 1)) + binary;
+		sum >>= 1;
+	}
+	return binary;
 }
 
 // =========================================================
