@@ -456,12 +456,27 @@ public:
 
 int InventorySystem::optimizeLootSplit(int n, vector<int> &coins)
 {
-	// TODO: Implement partition problem using DP
-	// Goal: Minimize |sum(subset1) - sum(subset2)|
-	// Hint: Use subset sum DP to find closest sum to total/2
-	return 0;
+    int total = accumulate(coins.begin(), coins.end(), 0);
+    int target = total / 2;
+    vector<char> dp(target + 1, false);
+    dp[0] = true;
+    for (int coin : coins)
+    {
+        for (int s = target; s >= coin; --s)
+        {
+            if (dp[s - coin])
+                dp[s] = true;
+        }
+    }
+    for (int s = target; s >= 0; --s)
+    {
+        if (dp[s])
+        {
+            return total - 2 * s; // minimal achievable difference
+        }
+    }
+    return total;
 }
-
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>> &items)
 {
 	// TODO: Implement 0/1 Knapsack using DP
@@ -549,9 +564,40 @@ struct Edge
 
 bool WorldNavigator::pathExists(int n, vector<vector<int>> &edges, int source, int dest)
 {
-	// TODO: Implement path existence check using BFS or DFS
-	// edges are bidirectional
-	return false;
+    if (source == dest)
+        return true;
+    vector<vector<int>> adj(n);
+    for (const auto &e : edges)
+    {
+        if (e.size() < 2)
+            continue;
+        int u = e[0], v = e[1];
+        if (u >= 0 && u < n && v >= 0 && v < n)
+        {
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+    }
+    vector<char> vis(n, false);
+    queue<int> q;
+    vis[source] = true;
+    q.push(source);
+    while (!q.empty())
+    {
+        int u = q.front();
+        q.pop();
+        for (int v : adj[u])
+        {
+            if (!vis[v])
+            {
+                if (v == dest)
+                    return true;
+                vis[v] = true;
+                q.push(v);
+            }
+        }
+    }
+    return false;
 }
 
 /// @brief Implemented using Kruskal's Algorithm
@@ -691,3 +737,4 @@ extern "C"
 
 	AuctionTree *createAuctionTree() { return new ConcreteAuctionTree(); }
 }
+
