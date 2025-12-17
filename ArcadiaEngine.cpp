@@ -480,18 +480,47 @@ int InventorySystem::optimizeLootSplit(int n, vector<int> &coins)
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>> &items)
 {
 	// TODO: Implement 0/1 Knapsack using DP
+	vector<int> dp(capacity + 1, 0);
+
 	// items = {weight, value} pairs
+    for (const auto& item : items) {
+        int weight = item.first;
+        int value = item.second;
+
+        for (int w = capacity; w >= weight; --w) {
+            dp[w] = max(dp[w], dp[w - weight] + value);
+        }
+    }
+	
 	// Return maximum value achievable within capacity
-	return 0;
+    return dp[capacity];
+	
 }
 
 long long InventorySystem::countStringPossibilities(string s)
 {
-	// TODO: Implement string decoding DP
-	// Rules: "uu" can be decoded as "w" or "uu"
-	//        "nn" can be decoded as "m" or "nn"
-	// Count total possible decodings
-	return 0;
+	const int MOD = 1e9 + 7;
+    int n = s.length();
+	
+	if (n == 0) return 0;
+
+	vector<long long> dp(n + 1);
+    dp[0] = 1; 
+    dp[1] = 1; 
+	
+	for (int i = 2; i <= n; ++i) {
+        dp[i] = dp[i - 1];
+
+        if (s[i - 1] == 'u' && s[i - 2] == 'u') {
+            dp[i] = (dp[i] + dp[i - 2]) % MOD;
+        }
+
+        if (s[i - 1] == 'n' && s[i - 2] == 'n') {
+            dp[i] = (dp[i] + dp[i - 2]) % MOD;
+        }
+    }
+
+    return dp[n];
 }
 
 // =========================================================
@@ -737,4 +766,5 @@ extern "C"
 
 	AuctionTree *createAuctionTree() { return new ConcreteAuctionTree(); }
 }
+
 
