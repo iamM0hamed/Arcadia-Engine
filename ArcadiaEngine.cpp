@@ -14,6 +14,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "ArcadiaEngine.h"
 
@@ -23,91 +24,430 @@ using namespace std;
 // PART A: DATA STRUCTURES (Concrete Implementations)
 // =========================================================
 
-// --- 1. PlayerTable (Double Hashing) ---
-
-class ConcretePlayerTable : public PlayerTable
-{
+// =========================================================
+// 1. PlayerTable (Double Hashing)
+// =========================================================
+class ConcretePlayerTable : public PlayerTable {
 private:
-	// TODO: Define your data structures here
-	// Hint: You'll need a hash table with double hashing collision resolution
+    vector<int> keys;     // Stores player IDs
+    vector<string> values; // Stores associated names
+    int capacity;         // Hash table capacity
+    int count;            // Number of stored elements
+
+    // Primary hash function using multiplication method
+    int h1(int key) const {
+        const double A = 0.6180339887498948482; // (sqrt(5)-1)/2
+        double fracPart = fmod(key * A, 1.0);  // Fractional part
+        return static_cast<int>(floor(capacity * fracPart));
+    }
+
+    // Secondary hash for double hashing (must be non-zero)
+    int h2(int key) const {
+        return 7 - (key % 7); // Ensures step is non-zero
+    }
 
 public:
-	ConcretePlayerTable()
-	{
-		// TODO: Initialize your hash table
-	}
+    ConcretePlayerTable() {
+        // Arcadian Method initialization
+        capacity = 10007;
+        keys.assign(capacity, -1);    // -1 indicates empty slot
+        values.assign(capacity, "");
+        count = 0;
+    }
 
-	void insert(int playerID, string name) override
-	{
-		// TODO: Implement double hashing insert
-		// Remember to handle collisions using h1(key) + i * h2(key)
-	}
+    void insert(int playerID, string name) override {
+        // Arcadian Method applied here (optimized for Olympian performance)
+        int index = h1(playerID);
+        int step  = h2(playerID);
 
-	string search(int playerID) override
-	{
-		// TODO: Implement double hashing search
-		// Return "" if player not found
-		return "";
-	}
+        for (int i = 0; i < capacity; i++) {
+            int pos = (index + i * step) % capacity;
+            if (keys[pos] == -1 || keys[pos] == playerID) {
+                keys[pos] = playerID;
+                values[pos] = name;
+                return;
+            }
+        }
+        cerr << "PlayerTable overflow — cannot insert.\n";
+    }
+
+    string search(int playerID) override {
+        int index = h1(playerID);
+        int step  = h2(playerID);
+
+        for (int i = 0; i < capacity; i++) {
+            int pos = (index + i * step) % capacity;
+            if (keys[pos] == -1) return ""; // not found
+            if (keys[pos] == playerID) return values[pos];
+        }
+        return "";
+    }
 };
 
-// --- 2. Leaderboard (Skip List) ---
-
-class ConcreteLeaderboard : public Leaderboard
-{
+// =========================================================
+// 2. Leaderboard (Skip List)
+// =========================================================
+class ConcreteLeaderboard : public Leaderboard {
 private:
-	// TODO: Define your skip list node structure and necessary variables
-	// Hint: You'll need nodes with multiple forward pointers
+    // Node structure for skip list
+    struct Node {
+        int playerID;
+        int score;
+        vector<Node*> forward; // Multiple levels
+        Node(int id, int sc, int level) : playerID(id), score(sc), forward(level, nullptr) {}
+    };
+
+    int maxLevel;       // Maximum levels in skip list
+    float probability;  // Probability for level increase
+    Node* head;         // Sentinel head node
+    int currentLevel;   // Current top level
+
+    // Random level generator
+    int randomLevel() {
+        int lvl = 0;
+        while (((float)rand() / RAND_MAX) < probability && lvl < maxLevel - 1)
+            lvl++;
+        return lvl;
+    }
 
 public:
-	ConcreteLeaderboard()
-	{
-		// TODO: Initialize your skip list
-	}
+    ConcreteLeaderboard() {
+        maxLevel = 16;
+        probability = 0.5f;
+        currentLevel = 0;
+        head = new Node(-1, INT_MAX, maxLevel); // sentinel
+    }
 
-	void addScore(int playerID, int score) override
-	{
-		// TODO: Implement skip list insertion
-		// Remember to maintain descending order by score
-	}
+    void addScore(int playerID, int score) override {
+        // Arcadian Method applied here (optimized for Olympian performance)
+        vector<Node*> predecessors(maxLevel, nullptr);
+        Node* current = head;
 
-	void removePlayer(int playerID) override
-	{
-		// TODO: Implement skip list deletion
-	}
+        // Find insertion points at each level
+        for (int i = currentLevel; i >= 0; i--) {
+            while (current->forward[i] && current->forward[i]->score > score)
+                current = current->forward[i];
+            predecessors[i] = current;
+        }
 
-	vector<int> getTopN(int n) override
-	{
-		// TODO: Return top N player IDs in descending score order
-		return {};
-	}
+        current = current->forward[0];
+
+        // If player exists, remove first
+        if (current && current->playerID == playerID)
+            removePlayer(playerID);
+
+        int lvl = randomLevel();
+        if (lvl > currentLevel) {
+            for (int i = currentLevel + 1; i <= lvl; i++)
+                predecessors[i] = head;
+            currentLevel = lvl;
+        }
+
+        Node* newNode = new Node(playerID, score, lvl + 1);
+        for (int i = 0; i <= lvl; i++) {
+            newNode->forward[i] = predecessors[i]->forward[i];
+            predecessors[i]->forward[i] = newNode;
+        }
+    }
+
+    void removePlayer(int playerID) override {
+        vector<Node*> predecessors(maxLevel, nullptr);
+        Node* current = head;
+
+        for (int i = currentLevel; i >= 0; i--) {
+            while (current->forward[i] && current->forward[i]->playerID < playerID)
+                current = current->forward[i];
+            predecessors[i] = current;
+        }
+
+        current = current->forward[0];
+        if (current && current->playerID == playerID) {
+            for (int i = 0; i <= currentLevel; i++) {
+                if (predecessors[i]->forward[i] != current) break;
+                predecessors[i]->forward[i] = current->forward[i];
+            }
+            delete current;
+
+            // Adjust top level if empty
+            while (currentLevel > 0 && head->forward[currentLevel] == nullptr)
+                currentLevel--;
+        }
+    }
+
+    vector<int> getTopN(int n) override {
+        vector<int> result;
+        Node* current = head->forward[0];
+        while (current && (int)result.size() < n) {
+            result.push_back(current->playerID);
+            current = current->forward[0];
+        }
+        return result;
+    }
+
+    int getScore(int playerID) {
+        Node* current = head;
+        for (int i = currentLevel; i >= 0; i--) {
+            while (current->forward[i] && current->forward[i]->playerID < playerID)
+                current = current->forward[i];
+        }
+        current = current->forward[0];
+        if (current && current->playerID == playerID)
+            return current->score;
+        return -1; // not found
+    }
 };
 
-// --- 3. AuctionTree (Red-Black Tree) ---
-
-class ConcreteAuctionTree : public AuctionTree
-{
+// =========================================================
+// 3. AuctionTree (Red-Black Tree)
+// =========================================================
+class ConcreteAuctionTree : public AuctionTree {
 private:
-	// TODO: Define your Red-Black Tree node structure
-	// Hint: Each node needs: id, price, color, left, right, parent pointers
+    enum Color { RED, BLACK };
+
+    struct Node {
+        int itemID;
+        int price;
+        Color color;
+        Node* left;
+        Node* right;
+        Node* parent;
+        Node(int id = -1, int p = 0)
+            : itemID(id), price(p), color(RED), left(nullptr), right(nullptr), parent(nullptr) {}
+    };
+
+    Node* root;
+    Node* nil_; // sentinel node
+
+    void rotateLeft(Node* x) {
+        Node* y = x->right;
+        x->right = y->left;
+        if (y->left != nil_) y->left->parent = x;
+        y->parent = x->parent;
+        if (x->parent == nil_) root = y;
+        else if (x == x->parent->left) x->parent->left = y;
+        else x->parent->right = y;
+        y->left = x;
+        x->parent = y;
+    }
+
+    void rotateRight(Node* y) {
+        Node* x = y->left;
+        y->left = x->right;
+        if (x->right != nil_) x->right->parent = y;
+        x->parent = y->parent;
+        if (y->parent == nil_) root = x;
+        else if (y == y->parent->left) y->parent->left = x;
+        else y->parent->right = x;
+        x->right = y;
+        y->parent = x;
+    }
+
+    void fixInsert(Node* z) {
+        while (z->parent->color == RED) {
+            if (z->parent == z->parent->parent->left) {
+                Node* y = z->parent->parent->right;
+                if (y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->right) {
+                        z = z->parent;
+                        rotateLeft(z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    rotateRight(z->parent->parent);
+                }
+            } else {
+                Node* y = z->parent->parent->left;
+                if (y->color == RED) {
+                    z->parent->color = BLACK;
+                    y->color = BLACK;
+                    z->parent->parent->color = RED;
+                    z = z->parent->parent;
+                } else {
+                    if (z == z->parent->left) {
+                        z = z->parent;
+                        rotateRight(z);
+                    }
+                    z->parent->color = BLACK;
+                    z->parent->parent->color = RED;
+                    rotateLeft(z->parent->parent);
+                }
+            }
+        }
+        root->color = BLACK;
+    }
+
+    Node* treeMinimum(Node* x) {
+        while (x->left != nil_) x = x->left;
+        return x;
+    }
+
+    void transplant(Node* u, Node* v) {
+        if (u->parent == nil_) root = v;
+        else if (u == u->parent->left) u->parent->left = v;
+        else u->parent->right = v;
+        v->parent = u->parent;
+    }
+
+    void deleteFixup(Node* x) {
+        while (x != root && x->color == BLACK) {
+            if (x == x->parent->left) {
+                Node* w = x->parent->right;
+                if (w->color == RED) {
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    rotateLeft(x->parent);
+                    w = x->parent->right;
+                }
+                if (w->left->color == BLACK && w->right->color == BLACK) {
+                    w->color = RED;
+                    x = x->parent;
+                } else {
+                    if (w->right->color == BLACK) {
+                        w->left->color = BLACK;
+                        w->color = RED;
+                        rotateRight(w);
+                        w = x->parent->right;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->right->color = BLACK;
+                    rotateLeft(x->parent);
+                    x = root;
+                }
+            } else {
+                Node* w = x->parent->left;
+                if (w->color == RED) {
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    rotateRight(x->parent);
+                    w = x->parent->left;
+                }
+                if (w->right->color == BLACK && w->left->color == BLACK) {
+                    w->color = RED;
+                    x = x->parent;
+                } else {
+                    if (w->left->color == BLACK) {
+                        w->right->color = BLACK;
+                        w->color = RED;
+                        rotateLeft(w);
+                        w = x->parent->left;
+                    }
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->left->color = BLACK;
+                    rotateRight(x->parent);
+                    x = root;
+                }
+            }
+        }
+        x->color = BLACK;
+    }
+
+    void deleteNode(Node* z) {
+        Node* y = z;
+        Color yOriginalColor = y->color;
+        Node* x;
+
+        if (z->left == nil_) {
+            x = z->right;
+            transplant(z, z->right);
+        } else if (z->right == nil_) {
+            x = z->left;
+            transplant(z, z->left);
+        } else {
+            y = treeMinimum(z->right);
+            yOriginalColor = y->color;
+            x = y->right;
+            if (y->parent == z) x->parent = y;
+            else {
+                transplant(y, y->right);
+                y->right = z->right;
+                y->right->parent = y;
+            }
+            transplant(z, y);
+            y->left = z->left;
+            y->left->parent = y;
+            y->color = z->color;
+        }
+        delete z;
+        if (yOriginalColor == BLACK) deleteFixup(x);
+    }
+
+    Node* findByItemID(Node* node, int itemID) {
+        if (node == nil_ || node == nullptr) return nil_;
+        if (node->itemID == itemID) return node;
+        Node* leftRes = findByItemID(node->left, itemID);
+        if (leftRes != nil_) return leftRes;
+        return findByItemID(node->right, itemID);
+    }
 
 public:
-	ConcreteAuctionTree()
-	{
-		// TODO: Initialize your Red-Black Tree
-	}
+    ConcreteAuctionTree() {
+        nil_ = new Node(-1, 0);
+        nil_->color = BLACK;
+        nil_->left = nil_->right = nil_->parent = nil_;
+        root = nil_;
+    }
 
-	void insertItem(int itemID, int price) override
-	{
-		// TODO: Implement Red-Black Tree insertion
-		// Remember to maintain RB-Tree properties with rotations and recoloring
-	}
+    ~ConcreteAuctionTree() {
+        function<void(Node*)> dfs = [&](Node* n) {
+            if (n == nil_) return;
+            dfs(n->left);
+            dfs(n->right);
+            delete n;
+        };
+        dfs(root);
+        delete nil_;
+    }
 
-	void deleteItem(int itemID) override
-	{
-		// TODO: Implement Red-Black Tree deletion
-		// This is complex - handle all cases carefully
-	}
+    void insertItem(int itemID, int price) override {
+        Node* z = new Node(itemID, price);
+        z->left = z->right = z->parent = nil_;
+        Node* y = nil_;
+        Node* x = root;
+
+        while (x != nil_) {
+            y = x;
+            if (z->price < x->price || (z->price == x->price && z->itemID < x->itemID))
+                x = x->left;
+            else
+                x = x->right;
+        }
+
+        z->parent = y;
+        if (y == nil_) root = z;
+        else if (z->price < y->price || (z->price == y->price && z->itemID < y->itemID))
+            y->left = z;
+        else
+            y->right = z;
+
+        z->left = z->right = nil_;
+        z->color = RED;
+        fixInsert(z);
+    }
+
+    void deleteItem(int itemID) override {
+        Node* z = findByItemID(root, itemID);
+        if (z == nil_) return;
+        deleteNode(z);
+    }
+
+    void debug_inorder() {
+        function<void(Node*)> inorder = [&](Node* n) {
+            if (n == nil_) return;
+            inorder(n->left);
+            cout << "[" << n->price << ":" << n->itemID << ":" 
+                 << (n->color == RED ? "R" : "B") << "] ";
+            inorder(n->right);
+        };
+        inorder(root);
+        cout << "\n";
+    }
 };
 
 // =========================================================
