@@ -36,9 +36,7 @@ private:
 
     // Primary hash function using multiplication method
     int h1(int key) const {
-        const double A = 0.6180339887498948482; // (sqrt(5)-1)/2
-        double fracPart = fmod(key * A, 1.0);  // Fractional part
-        return static_cast<int>(floor(capacity * fracPart));
+        return key % capacity;
     }
 
     // Secondary hash for double hashing (must be non-zero)
