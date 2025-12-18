@@ -454,27 +454,71 @@ public:
 
 int InventorySystem::optimizeLootSplit(int n, vector<int> &coins)
 {
-	// TODO: Implement partition problem using DP
-	// Goal: Minimize |sum(subset1) - sum(subset2)|
-	// Hint: Use subset sum DP to find closest sum to total/2
-	return 0;
+    int total = accumulate(coins.begin(), coins.end(), 0);
+    int target = total / 2;
+    vector<char> dp(target + 1, false);
+    dp[0] = true;
+    for (int coin : coins)
+    {
+        for (int s = target; s >= coin; --s)
+        {
+            if (dp[s - coin])
+                dp[s] = true;
+        }
+    }
+    for (int s = target; s >= 0; --s)
+    {
+        if (dp[s])
+        {
+            return total - 2 * s; // minimal achievable difference
+        }
+    }
+    return total;
 }
-
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>> &items)
 {
 	// TODO: Implement 0/1 Knapsack using DP
+	vector<int> dp(capacity + 1, 0);
+
 	// items = {weight, value} pairs
+    for (const auto& item : items) {
+        int weight = item.first;
+        int value = item.second;
+
+        for (int w = capacity; w >= weight; --w) {
+            dp[w] = max(dp[w], dp[w - weight] + value);
+        }
+    }
+	
 	// Return maximum value achievable within capacity
-	return 0;
+    return dp[capacity];
+	
 }
 
 long long InventorySystem::countStringPossibilities(string s)
 {
-	// TODO: Implement string decoding DP
-	// Rules: "uu" can be decoded as "w" or "uu"
-	//        "nn" can be decoded as "m" or "nn"
-	// Count total possible decodings
-	return 0;
+	const int MOD = 1e9 + 7;
+    int n = s.length();
+	
+	if (n == 0) return 0;
+
+	vector<long long> dp(n + 1);
+    dp[0] = 1; 
+    dp[1] = 1; 
+	
+	for (int i = 2; i <= n; ++i) {
+        dp[i] = dp[i - 1];
+
+        if (s[i - 1] == 'u' && s[i - 2] == 'u') {
+            dp[i] = (dp[i] + dp[i - 2]) % MOD;
+        }
+
+        if (s[i - 1] == 'n' && s[i - 2] == 'n') {
+            dp[i] = (dp[i] + dp[i - 2]) % MOD;
+        }
+    }
+
+    return dp[n];
 }
 
 // =========================================================
@@ -547,9 +591,40 @@ struct Edge
 
 bool WorldNavigator::pathExists(int n, vector<vector<int>> &edges, int source, int dest)
 {
-	// TODO: Implement path existence check using BFS or DFS
-	// edges are bidirectional
-	return false;
+    if (source == dest)
+        return true;
+    vector<vector<int>> adj(n);
+    for (const auto &e : edges)
+    {
+        if (e.size() < 2)
+            continue;
+        int u = e[0], v = e[1];
+        if (u >= 0 && u < n && v >= 0 && v < n)
+        {
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+    }
+    vector<char> vis(n, false);
+    queue<int> q;
+    vis[source] = true;
+    q.push(source);
+    while (!q.empty())
+    {
+        int u = q.front();
+        q.pop();
+        for (int v : adj[u])
+        {
+            if (!vis[v])
+            {
+                if (v == dest)
+                    return true;
+                vis[v] = true;
+                q.push(v);
+            }
+        }
+    }
+    return false;
 }
 
 /// @brief Implemented using Kruskal's Algorithm
@@ -689,3 +764,5 @@ extern "C"
 
 	AuctionTree *createAuctionTree() { return new ConcreteAuctionTree(); }
 }
+
+
